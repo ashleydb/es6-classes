@@ -1,6 +1,58 @@
 // Comparing ComponentOne, built using React.createClass vs. ComponentTwo, built using extends React.Component
 import React from 'react';
 
+// This would have come from somewhere, like a DB. Will use this in our higher order compnent below
+var isAdmin = true;
+
+// Higher order component. The function takes a component and returns a (modified) component.
+// Note we pass the props down using spread operator.
+// In this case we are hiding components from users if they are not an admin, meaning that logic can be encapsulated here
+//  rather than modifying every component that needs admin capabilities.
+/*
+var adminComponent = (Component) => {
+  return class Admin extends React.Component {
+    render() {
+      if (isAdmin) {
+        return (
+          <div className="callout secondary">
+            <p className="alert label">Private Admin Info</p>
+            <Component {...this.props} />
+          </div>
+        );
+      } else {
+        // The entire higher order component and everything it wraps is hidden from the user since they are not an admin
+        return null;
+      }
+    }
+  };
+}
+*/
+// Alternative implementation, extending the component itself so we can override other lifecycle methods
+var adminComponent = (Component) => {
+  return class Admin extends Component {
+    componentDidUpdate() {
+      console.log('admin component did update');
+      // Call the parent's function, if it was defined in the parent class
+      if (super.componentDidUpdate) {
+        super.componentDidUpdate();
+      }
+    }
+    render() {
+      if (isAdmin) {
+        return (
+          <div className="callout secondary">
+            <p className="alert label">Private Admin Info</p>
+            {super.render()}
+          </div>
+        );
+      } else {
+        // The entire higher order component and everything it wraps is hidden from the user since they are not an admin
+        return null;
+      }
+    }
+  };
+}
+
 class ComponentTwo extends React.Component {
   // Need to override the constructor to set the initial state
   constructor(props) {
@@ -18,6 +70,9 @@ class ComponentTwo extends React.Component {
     this.setState({
       count: this.state.count + 1
     });
+  }
+  componentDidUpdate() {
+    console.log('component 2 did update');
   }
   render() {
     return (
@@ -40,4 +95,5 @@ ComponentTwo.defaultProps = {
   count: 50
 }
 
-export default ComponentTwo;
+// Using a higher order component
+export default adminComponent(ComponentTwo);
